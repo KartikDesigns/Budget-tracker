@@ -1018,7 +1018,15 @@ function showNotification(message, type = "info", duration = 2000) {
 class BudgetTracker {
   constructor() {
     this.transactions = this.loadTransactions();
-    this.smartSuggestions = new SmartSuggestions(this.transactions);
+    
+    // Initialize SmartSuggestions with error handling
+    try {
+      this.smartSuggestions = new SmartSuggestions(this.transactions);
+    } catch (error) {
+      console.error("Error initializing SmartSuggestions:", error);
+      this.smartSuggestions = null;
+    }
+    
     this.chart = null;
     this.currency = this.loadCurrency();
     this.chartType = this.loadChartType();
@@ -1210,11 +1218,24 @@ class BudgetTracker {
   
   // Add a new transaction
   addTransaction() {
-    const desc = document.getElementById("desc").value.trim();
-    const amount = parseFloat(document.getElementById("amount").value);
-    const date = document.getElementById("date").value;
-    const type = document.getElementById("type").value;
-    const category = document.getElementById("category").value.trim();
+    const descEl = document.getElementById("desc");
+    const amountEl = document.getElementById("amount");
+    const dateEl = document.getElementById("date");
+    const typeEl = document.getElementById("type");
+    const categoryEl = document.getElementById("category");
+    
+    // Check if all required elements exist
+    if (!descEl || !amountEl || !dateEl || !typeEl || !categoryEl) {
+      console.error("Required form elements not found");
+      showNotification("Form elements not found. Please refresh the page.", "error");
+      return;
+    }
+    
+    const desc = descEl.value.trim();
+    const amount = parseFloat(amountEl.value);
+    const date = dateEl.value;
+    const type = typeEl.value;
+    const category = categoryEl.value.trim();
     
     if (!desc || isNaN(amount) || amount <= 0 || !date || !type) {
       showNotification("Please fill all required fields with valid values.", "error");
@@ -1251,11 +1272,16 @@ class BudgetTracker {
     this.updateUI();
     
     // Reset form
-    document.getElementById("transaction-form").reset();
+    const form = document.getElementById("transaction-form");
+    if (form) {
+      form.reset();
+    }
     
     // Clear suggestions
-    this.smartSuggestions.hideDescriptionSuggestions();
-    this.smartSuggestions.hideCategorySuggestions();
+    if (this.smartSuggestions) {
+      this.smartSuggestions.hideDescriptionSuggestions();
+      this.smartSuggestions.hideCategorySuggestions();
+    }
     
     showNotification("Transaction added successfully!", "success");
   }
@@ -1468,7 +1494,11 @@ class BudgetTracker {
     this.updateTotals();
     this.updateTransactionsList();
     this.updateChart();
-    this.smartSuggestions.updateTransactions(this.transactions);
+    
+    // Update smart suggestions if available
+    if (this.smartSuggestions) {
+      this.smartSuggestions.updateTransactions(this.transactions);
+    }
     
     // Update currency selector UI
     const currencySelector = document.getElementById("currency-selector");
@@ -1491,25 +1521,35 @@ class BudgetTracker {
       maximumFractionDigits: 0
     });
     
-    document.getElementById("total-income").textContent = formatter.format(income);
-    document.getElementById("total-expense").textContent = formatter.format(expense);
-    document.getElementById("total-recovery").textContent = formatter.format(recovery);
-    document.getElementById("balance").textContent = formatter.format(balance);
+    // Update total elements with null checks
+    const totalIncomeEl = document.getElementById("total-income");
+    const totalExpenseEl = document.getElementById("total-expense");
+    const totalRecoveryEl = document.getElementById("total-recovery");
+    const balanceEl = document.getElementById("balance");
     
-
+    if (totalIncomeEl) totalIncomeEl.textContent = formatter.format(income);
+    if (totalExpenseEl) totalExpenseEl.textContent = formatter.format(expense);
+    if (totalRecoveryEl) totalRecoveryEl.textContent = formatter.format(recovery);
+    if (balanceEl) balanceEl.textContent = formatter.format(balance);
     
     // Add warning class if balance is negative
-    const balanceElement = document.getElementById("balance");
-    if (balance < 0) {
-      balanceElement.classList.add("balance-warning");
-    } else {
-      balanceElement.classList.remove("balance-warning");
+    if (balanceEl) {
+      if (balance < 0) {
+        balanceEl.classList.add("balance-warning");
+      } else {
+        balanceEl.classList.remove("balance-warning");
+      }
     }
   }
   
   // Update transactions list display
   updateTransactionsList() {
     const transactionsList = document.getElementById("transactions-list");
+    if (!transactionsList) {
+      console.warn("Transactions list element not found");
+      return;
+    }
+    
     const recentTransactions = [...this.transactions].sort((a, b) => 
       new Date(b.date) - new Date(a.date)
     );
@@ -1745,6 +1785,20 @@ class BudgetTracker {
 
 // Initialize the app when the DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
+  // Check if critical elements exist before initializing
+  const criticalElements = [
+    'total-income', 'total-expense', 'total-recovery', 'balance',
+    'transactions-list', 'transaction-form'
+  ];
+  
+  const missingElements = criticalElements.filter(id => !document.getElementById(id));
+  
+  if (missingElements.length > 0) {
+    console.error("Critical elements missing:", missingElements);
+    // Still try to initialize, but with warnings
+    console.warn("Some features may not work properly due to missing elements");
+  }
+  
   // Set max date to today for the date input
   const today = new Date().toISOString().split('T')[0];
   const dateInput = document.getElementById('date');
@@ -1752,7 +1806,31 @@ document.addEventListener("DOMContentLoaded", () => {
     dateInput.setAttribute('max', today);
   }
   
-  new BudgetTracker();
+  try {
+    new BudgetTracker();
+  } catch (error) {
+    console.error("Error initializing BudgetTracker:", error);
+    // Show user-friendly error message
+    const container = document.querySelector('.container');
+    if (container) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 50px; color: #e0e0f0;">
+          <h2>⚠️ Application Error</h2>
+          <p>There was an error loading the Budget Tracker.</p>
+          <p>Please refresh the page or check the browser console for details.</p>
+          <button onclick="location.reload()" style="
+            background: linear-gradient(135deg, #6a5acd, #4b6cb7);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+          ">Refresh Page</button>
+        </div>
+      `;
+    }
+  }
 });
 
 // Register service worker for PWA functionality
