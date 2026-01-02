@@ -1,6 +1,6 @@
-const CACHE_NAME = 'budget-tracker-v2';
-const STATIC_CACHE_NAME = 'budget-tracker-static-v1';
-const RUNTIME_CACHE_NAME = 'budget-tracker-runtime-v1';
+const CACHE_NAME = 'budget-tracker-v3';
+const STATIC_CACHE_NAME = 'budget-tracker-static-v2';
+const RUNTIME_CACHE_NAME = 'budget-tracker-runtime-v2';
 
 const staticAssets = [
   './',
