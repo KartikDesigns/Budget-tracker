@@ -1037,6 +1037,9 @@ class BudgetTracker {
     // Load transactions and update UI
     this.updateUI();
     
+    // Ensure date input allows future dates
+    this.setupDateInput();
+    
     // Set up form submission
     const form = document.getElementById("transaction-form");
     if (form) {
@@ -1859,8 +1862,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Date input setup - future dates are now allowed
   const dateInput = document.getElementById('date');
   if (dateInput) {
-    // No max date restriction - users can select future dates
-    console.log('Date input initialized - future dates allowed');
+    // Explicitly remove any max attribute to ensure future dates are allowed
+    dateInput.removeAttribute('max');
+    console.log('Date input initialized - future dates allowed, max attribute removed');
   }
   
   try {
