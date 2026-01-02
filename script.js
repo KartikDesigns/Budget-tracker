@@ -1248,15 +1248,7 @@ class BudgetTracker {
       return;
     }
     
-    // Validate that the date is not in the future
-    const selectedDate = new Date(date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set time to start of day for comparison
-    
-    if (selectedDate > today) {
-      showNotification("Transaction date cannot be in the future.", "error");
-      return;
-    }
+    // Date validation removed - future dates are now allowed
     
     const transaction = {
       id: Date.now(),
@@ -1864,11 +1856,11 @@ document.addEventListener("DOMContentLoaded", () => {
     console.warn("Some features may not work properly due to missing elements");
   }
   
-  // Set max date to today for the date input
-  const today = new Date().toISOString().split('T')[0];
+  // Date input setup - future dates are now allowed
   const dateInput = document.getElementById('date');
   if (dateInput) {
-    dateInput.setAttribute('max', today);
+    // No max date restriction - users can select future dates
+    console.log('Date input initialized - future dates allowed');
   }
   
   try {
