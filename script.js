@@ -1636,34 +1636,81 @@ class BudgetTracker {
     try {
       // Create chart based on selected type
       if (this.chartType === 'bar') {
+        // Filter out zero values and their corresponding labels for better display
+        const data = [];
+        const labels = [];
+        const backgroundColors = [];
+        const borderColors = [];
+        
+        if (income > 0) {
+          data.push(income);
+          labels.push("Income");
+          backgroundColors.push("rgba(0, 200, 150, 0.7)");
+          borderColors.push("rgba(0, 200, 150, 1)");
+        }
+        
+        if (expense > 0) {
+          data.push(expense);
+          labels.push("Expenses");
+          backgroundColors.push("rgba(217, 83, 111, 0.7)");
+          borderColors.push("rgba(217, 83, 111, 1)");
+        }
+        
+        if (recovery > 0) {
+          data.push(recovery);
+          labels.push("Recovery");
+          backgroundColors.push("rgba(255, 174, 66, 0.7)");
+          borderColors.push("rgba(255, 174, 66, 1)");
+        }
+        
+        // If no data, show all categories with zero values
+        if (data.length === 0) {
+          data.push(0, 0, 0);
+          labels.push("Income", "Expenses", "Recovery");
+          backgroundColors.push(
+            "rgba(0, 200, 150, 0.7)",
+            "rgba(217, 83, 111, 0.7)",
+            "rgba(255, 174, 66, 0.7)"
+          );
+          borderColors.push(
+            "rgba(0, 200, 150, 1)",
+            "rgba(217, 83, 111, 1)",
+            "rgba(255, 174, 66, 1)"
+          );
+        }
+        
         this.chart = new Chart(ctx, {
           type: "bar",
           data: {
-            labels: ["Income", "Expenses", "Recovery"],
+            labels: labels,
             datasets: [{
               label: "Amount",
-              data: [income, expense, recovery],
-              backgroundColor: [
-                "rgba(0, 200, 150, 0.7)", // Income - teal
-                "rgba(217, 83, 111, 0.7)", // Expense - pink-red
-                "rgba(255, 174, 66, 0.7)"  // Recovery - golden
-              ],
-              borderColor: [
-                "rgba(0, 200, 150, 1)",
-                "rgba(217, 83, 111, 1)",
-                "rgba(255, 174, 66, 1)"
-              ],
-              borderWidth: 2
+              data: data,
+              backgroundColor: backgroundColors,
+              borderColor: borderColors,
+              borderWidth: 2,
+              borderRadius: 8,
+              borderSkipped: false,
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+              intersect: false,
+              mode: 'index'
+            },
             plugins: {
               legend: {
                 display: false
               },
               tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                borderColor: 'rgba(106, 90, 205, 0.5)',
+                borderWidth: 1,
+                cornerRadius: 8,
                 callbacks: {
                   label: (context) => {
                     const formatter = new Intl.NumberFormat('en-IN', {
@@ -1681,41 +1728,59 @@ class BudgetTracker {
                 beginAtZero: true,
                 ticks: {
                   color: "#e0e0f0",
+                  font: {
+                    size: 11
+                  },
                   callback: (value) => {
                     // Format large numbers with abbreviations
                     if (value >= 1e12) {
-                      return (value / 1e12).toFixed(2) + 'T';
+                      return (value / 1e12).toFixed(1) + 'T';
                     } else if (value >= 1e9) {
-                      return (value / 1e9).toFixed(2) + 'B';
+                      return (value / 1e9).toFixed(1) + 'B';
                     } else if (value >= 1e6) {
-                      return (value / 1e6).toFixed(2) + 'M';
+                      return (value / 1e6).toFixed(1) + 'M';
                     } else if (value >= 1e3) {
-                      return (value / 1e3).toFixed(2) + 'K';
+                      return (value / 1e3).toFixed(1) + 'K';
                     } else {
-                      const formatter = new Intl.NumberFormat('en-IN', {
-                        style: 'currency',
-                        currency: this.currency,
-                        maximumFractionDigits: 0
-                      });
-                      return formatter.format(value);
+                      return value.toLocaleString();
                     }
                   }
                 },
                 grid: {
-                  color: "rgba(106, 90, 205, 0.2)"
+                  color: "rgba(106, 90, 205, 0.2)",
+                  drawBorder: false
+                },
+                border: {
+                  display: false
                 }
               },
               x: {
                 ticks: {
-                  color: "#e0e0f0"
+                  color: "#e0e0f0",
+                  font: {
+                    size: 12,
+                    weight: 'bold'
+                  }
                 },
                 grid: {
-                  color: "rgba(106, 90, 205, 0.2)"
+                  display: false
+                },
+                border: {
+                  display: false
                 }
               }
             },
             animation: {
-              duration: 1000
+              duration: 1000,
+              easing: 'easeOutQuart'
+            },
+            layout: {
+              padding: {
+                top: 20,
+                bottom: 10,
+                left: 10,
+                right: 10
+              }
             }
           }
         });
